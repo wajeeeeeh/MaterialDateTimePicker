@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.novoda.bintray-release' // must be applied after your artifact generating plugin (eg. java / com.android.library)
 
 android {
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
@@ -16,13 +17,46 @@ android {
             minifyEnabled false
         }
     }
+
+    lintOptions {
+        warning 'MissingTranslation', 'ObjectAnimatorBinding'
+    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:support-v4:25.1.0'
-    compile 'com.android.support:support-v13:25.1.0'
-    compile 'com.android.support:design:25.1.0'
+    compile 'com.android.support:support-v4:25.1.1'
+    compile 'com.android.support:support-v13:25.1.1'
+    compile 'com.android.support:design:25.1.1'
 }
 
-apply from: 'gradle-mvn-push.gradle'
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.sourceFiles
+}
+
+artifacts {
+    archives androidSourcesJar
+    archives androidJavadocsJar
+}
+
+publish {
+    userOrg = 'infinum'
+    groupId = 'co.infinum'
+    artifactId = 'materialdatetimepicker-support'
+    publishVersion = project.VERSION_NAME
+    desc = 'MaterialDateTimePicker which uses support fragments'
+    website = 'https://github.com/infinum/MaterialDateTimePicker'
+    licences = ["Apache-2.0"]
+    repoName = 'android'
+}
